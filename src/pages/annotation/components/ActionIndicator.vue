@@ -1,21 +1,24 @@
 <template>
-  <div
-    class="action-indicator"
-    :style="{ 'background-color': q.dark.isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)' }"
-  >
+  <div style="overflow-x: hidden">
     <div
-      :title="`Action: ${action.action}\nStart: ${action.start}\nEnd: ${action.end}\nDuration: ${
-        action.end - action.start
-      }\nDescription: ${action.description}`"
-      class="action"
-      v-for="(action, index) in actionIndicatorList"
-      :style="{
-        left: action.leftPercent,
-        right: action.rightPercent,
-        'background-color': action.color
-      }"
-      @click="handleClick(index)"
-    ></div>
+      class="action-indicator"
+      v-for="(actionTrack, index) in actionTrackList"
+      :style="{ 'background-color': q.dark.isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)' }"
+    >
+      <div
+        :title="`Action: ${action.action}\nStart: ${action.start}\nEnd: ${action.end}\nDuration: ${
+          action.end - action.start
+        }\nDescription: ${action.description}`"
+        class="action"
+        v-for="action in actionTrack"
+        :style="{
+          left: action.leftPercent,
+          right: action.rightPercent,
+          'background-color': action.color
+        }"
+        @click="handleClick(action.index)"
+      ></div>
+    </div>
   </div>
 </template>
 
@@ -31,22 +34,54 @@ const annotationStore = useAnnotationStore()
 const configurationStore = useConfigurationStore()
 const q = useQuasar()
 
-const actionIndicatorList = computed(() => {
+const actionTrackList = computed(() => {
   if (!annotationStore.video.frames) {
-    return []
+    return [[]]
   }
-  return annotationStore.actionAnnotationList.map((action) => {
-    const markerWidthUnit = 100 / (annotationStore.video.frames - 1)
+
+  const tracks = [[]]
+  const markerWidthUnit = 100 / (annotationStore.video.frames - 1)
+
+  annotationStore.actionAnnotationList.forEach((action, index) => {
     const leftFrame = utils.time2index(action.start)
     const rightFrame = utils.time2index(action.end)
     const leftPercent = (leftFrame - 0.5) * markerWidthUnit + '%'
     const rightPercent = (annotationStore.video.frames - rightFrame - 1.5) * markerWidthUnit + '%'
-    return {
+
+    const actionWithPosition = {
       ...action,
+      index,
+      leftFrame,
+      rightFrame,
       leftPercent,
       rightPercent
     }
+
+    let placed = false
+    for (const track of tracks) {
+      let overlap = false
+      for (const trackAction of track) {
+        if (
+          !(
+            actionWithPosition.rightFrame < trackAction.leftFrame ||
+            actionWithPosition.leftFrame > trackAction.rightFrame
+          )
+        ) {
+          overlap = true
+          break
+        }
+      }
+      if (!overlap) {
+        track.push(actionWithPosition)
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      tracks.push([actionWithPosition])
+    }
   })
+  return tracks
 })
 
 const handleClick = (index) => {
@@ -65,6 +100,7 @@ const handleClick = (index) => {
 .action-indicator {
   position: relative;
   height: 8px;
+  margin-bottom: 8px;
 }
 
 .action-indicator .action {
