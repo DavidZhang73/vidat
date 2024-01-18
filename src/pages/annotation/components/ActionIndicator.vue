@@ -1,5 +1,5 @@
 <template>
-  <div style="overflow-x: hidden">
+  <div class="action-indicator-container">
     <div
       class="action-indicator"
       v-for="(actionTrack, index) in actionTrackList"
@@ -97,20 +97,25 @@ const handleClick = (index) => {
 </script>
 
 <style>
-.action-indicator {
+.action-indicator-container {
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.action-indicator-container .action-indicator {
   position: relative;
   height: 8px;
   margin-bottom: 8px;
 }
 
-.action-indicator .action {
+.action-indicator-container .action-indicator .action {
   position: absolute;
   height: 100%;
   background-blend-mode: multiply;
   cursor: pointer;
 }
 
-.action-indicator .action:hover {
+.action-indicator-container .action-indicator .action:hover {
   transform: scaleY(1.5);
   transition: transform 0.2s ease-in-out;
 }

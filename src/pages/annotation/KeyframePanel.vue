@@ -90,7 +90,7 @@
       />
       <ActionIndicator
         v-if="preferenceStore.actions"
-        style="margin: -10px 0 10px 0"
+        style="margin-top: -18px"
       />
     </div>
     <q-btn-group flat>
