@@ -23,14 +23,14 @@ the changes. Newly submitted annotations override any existing annotations for a
 
 ## Installation
 
-To run the demo, install `nodejs`, `npm` and various modules. And link the static Vidat browser
-code to the subdirectory `vdiat`.
+To run the demo, install `nodejs`, `npm` and various modules. And link the static Vidat files in
+`dist` to the subdirectory `vdiat`.
 
 ```
 sudo apt install nodejs npm
 npm install --save express ejs body-parser cors
 
-ln -s ../../src vidat
+ln -s ../../dist vidat
 ```
 
 Detailed instructions for installing `express` can be found at https://expressjs.com/en/starter/installing.html.
@@ -41,4 +41,4 @@ Corresponding annotations will be saved in `vidat/annotation`.
 ## Running
 
 1. Open a terminal and run `node index.js`
-2. Open a web broswer and navigate to `http://localhost:3000/`
+2. Open a web browser and navigate to `http://localhost:3000/`
