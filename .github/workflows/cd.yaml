@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -37,32 +41,19 @@ jobs:
           title: Development Release v${{ steps.package-version.outputs.current-version}}
           files: |
             vidat-v${{ steps.package-version.outputs.current-version}}.zip
-      - name: Deploy With SSH (Optional)
-        uses: easingthemes/ssh-deploy@main
-        if: ${{ env.SSH_PRIVATE_KEY != '' && env.REMOTE_HOST != '' && env.REMOTE_USER != '' }}
+      - name: Deploy identical build to both origins
         env:
           SSH_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          ARGS: -rltgoDzvO
-          SOURCE: dist/
-          REMOTE_HOST: ${{ secrets.HOST }}
-          REMOTE_USER: ${{ secrets.USER }}
-          TARGET: ${{ secrets.TARGET }}
-      - name: Inject Umami and Charity Script (Optional)
-        uses: appleboy/ssh-action@master
-        if: ${{ env.SSH_PRIVATE_KEY != '' && env.REMOTE_HOST != '' && env.REMOTE_USER != '' && env.UMAMI_SCRIPT != ''  && env.CLARITY_SCRIPT != ''}}
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST }}
-          REMOTE_USER: ${{ secrets.USER }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+          TARGET: ${{ vars.TARGET }}
+          SSH_KNOWN_HOSTS: ${{ vars.SSH_KNOWN_HOSTS }}
+          SF_DEPLOY_HOST: ${{ vars.SF_DEPLOY_HOST }}
+          SF_DEPLOY_USER: ${{ vars.SF_DEPLOY_USER }}
+          SF_DEPLOY_PORT: ${{ vars.SF_DEPLOY_PORT }}
+          SF_TARGET: ${{ vars.SF_TARGET }}
+          SF_SSH_KNOWN_HOSTS: ${{ vars.SF_SSH_KNOWN_HOSTS }}
           UMAMI_SCRIPT: ${{ secrets.UMAMI_SCRIPT }}
           CLARITY_SCRIPT: ${{ secrets.CLARITY_SCRIPT }}
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.PRIVATE_KEY }}
-          script: |
-            cd ${{ secrets.TARGET }}
-            mv index.html index.html.bak1
-            sed "/<\/head>/ i ${{ secrets.UMAMI_SCRIPT }}" index.html.bak1 > index.html
-            mv index.html index.html.bak2
-            sed "/<\/head>/ i ${{ secrets.CLARITY_SCRIPT }}" index.html.bak2 > index.html
+        run: python3 scripts/deploy_dual.py
